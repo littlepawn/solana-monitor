@@ -14,8 +14,8 @@ import (
 
 const (
 	SolanaWebSocketURL = "wss://api.mainnet-beta.solana.com"
-	PingInterval       = 15 * time.Second // 每 15 秒发送一次 Ping
-	ReconnectInterval  = 5 * time.Second  // 断开后 5 秒后重连
+	PingInterval       = 5 * time.Second // 每 15 秒发送一次 Ping
+	ReconnectInterval  = 5 * time.Second // 断开后 5 秒后重连
 )
 
 // RPCRequest 表示 RPC 请求格式
