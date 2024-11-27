@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gagliardetto/solana-go"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ func NewTransactionService() *TransactionService {
 
 func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (TransactionRep, error) {
 	client := rpc.New(rpc.MainNetBeta_RPC)
-	var transactionRep TransactionRep
+	var transactionRep, _preTransactionRep, _postTransactionRep TransactionRep
 	signature, err := solana.SignatureFromBase58(signatureStr)
 	if err != nil {
 		log.Fatalf("Failed to parse signature: %v", err)
@@ -42,17 +43,55 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 	if err != nil {
 		return transactionRep, err
 	}
-	for _, tokenBalance := range txDetails.Meta.PostTokenBalances {
+	for _, tokenBalance := range txDetails.Meta.PreTokenBalances {
 		if tokenBalance.Owner.String() == address && tokenBalance.ProgramId.String() == SPLTokenProgramID {
 			fmt.Printf("%s 买入数量: %s, mint: %s\n", address, tokenBalance.UiTokenAmount.UiAmountString, tokenBalance.Mint.String())
-			transactionRep = TransactionRep{
+			_preTransactionRep = TransactionRep{
 				Address: address,
 				Amount:  tokenBalance.UiTokenAmount.UiAmountString,
 				Mint:    tokenBalance.Mint.String(),
-				Type:    "buy",
 			}
 			break
 		}
+	}
+
+	for _, tokenBalance := range txDetails.Meta.PostTokenBalances {
+		if tokenBalance.Owner.String() == address && tokenBalance.ProgramId.String() == SPLTokenProgramID {
+			_postTransactionRep = TransactionRep{
+				Address: address,
+				Amount:  tokenBalance.UiTokenAmount.UiAmountString,
+				Mint:    tokenBalance.Mint.String(),
+			}
+			break
+		}
+	}
+	if _preTransactionRep.Address == "" && _postTransactionRep.Address != "" {
+		transactionRep = _postTransactionRep
+		transactionRep.Type = "buy"
+		fmt.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
+	}
+	if _preTransactionRep.Address != "" {
+		transactionRep = _preTransactionRep
+		transactionRep.Type = "sell"
+		if _postTransactionRep.Address != "" {
+			preAmount, err := strconv.ParseFloat(_preTransactionRep.Amount, 64)
+			if err != nil {
+				fmt.Printf("Failed to parse pre-transaction amount: %v", err)
+			}
+			postAmount, err := strconv.ParseFloat(_postTransactionRep.Amount, 64)
+			if err != nil {
+				fmt.Printf("Failed to parse post-transaction amount: %v", err)
+			}
+			if preAmount > postAmount {
+				transactionRep.Amount = fmt.Sprintf("%.2f", preAmount-postAmount)
+			} else {
+				transactionRep.Amount = fmt.Sprintf("%.2f", postAmount-preAmount)
+				transactionRep.Type = "buy"
+				fmt.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
+				return transactionRep, nil
+			}
+		}
+		fmt.Printf("%s 卖出数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
 	}
 	return transactionRep, nil
 

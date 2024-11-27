@@ -14,6 +14,7 @@ func ParseTransactionLogs() {
 
 	// 替换为实际的交易签名
 	signatureStr := "5DcYSSqgrgivaWsWA4i3PNrNYkdFTnaU6EC2i3afiBun2kpNdFKSPKf14FWuhRSDCqiB7p9MeJQtf3oSqCK9LmFx"
+	//signatureStr := "3AgZ2cJcj71C4KvAr7vWCkbZCxKvM3Donu4GwLStGj3GGtNtk1UNhaUet9L9d2iT8LvJbZ9onUPtLCMBeu5RY7DW"
 	address := "HXvUJoQuDvpZ4oNNFF5itafDfwMUCAFijLnjCwKVJ5rg"
 
 	ctx := context.Background()
@@ -40,5 +41,5 @@ func ParseTransactionLogs() {
 			fmt.Printf("%s 买入数量: %s, mint: %s\n", address, tokenBalance.UiTokenAmount.UiAmountString, tokenBalance.Mint.String())
 		}
 	}
-	
+
 }
