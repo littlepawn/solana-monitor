@@ -142,7 +142,13 @@ func handleMessages(wsConn *WSConnection, address string) {
 			if err != nil {
 				wsConn.logger.Printf("获取交易日志失败: %v", err)
 			}
-			wsConn.logger.Printf("交易日志: %v", categorizedLogs)
+			categorizedLogsJson, err := json.Marshal(categorizedLogs)
+			if err != nil {
+				wsConn.logger.Printf("交易日志: %c", categorizedLogs)
+				wsConn.logger.Printf("JSON 序列化失败: %v", err)
+			} else {
+				wsConn.logger.Printf("交易日志: %s", categorizedLogsJson)
+			}
 
 			if notification.Params.Result.Value.Err != nil {
 				wsConn.logger.Printf("交易失败: %v", notification.Params.Result.Value.Err)

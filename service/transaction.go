@@ -17,9 +17,9 @@ const (
 )
 
 type CategorizedLogs struct {
-	SPLTokenLogs []string
-	SystemLogs   []string
-	OtherLogs    []string
+	SPLTokenLogs []string `json:"spl_token_logs"`
+	SystemLogs   []string `json:"system_logs"`
+	OtherLogs    []string `json:"other_logs"`
 }
 
 type TransactionService struct{}
