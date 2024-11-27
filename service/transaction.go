@@ -28,22 +28,23 @@ func NewTransactionService() *TransactionService {
 	return &TransactionService{}
 }
 
-func (s *TransactionService) GetTransactionLogs(signatureStr string) error {
+func (s *TransactionService) GetTransactionLogs(signatureStr string) (CategorizedLogs, error) {
 	client := rpc.New(rpc.MainNetBeta_RPC)
+	var _categorizedLogs CategorizedLogs
 	signature, err := solana.SignatureFromBase58(signatureStr)
 	if err != nil {
 		log.Fatalf("Failed to parse signature: %v", err)
-		return err
+		return _categorizedLogs, err
 	}
 
-	categorizedLogs, err := categorizeTransactionLogs(client, signature)
+	_categorizedLogs, err = categorizeTransactionLogs(client, signature)
 	if err != nil {
 		log.Fatalf("Failed to categorize logs: %v", err)
-		return err
+		return _categorizedLogs, err
 	}
 
-	printLogs(categorizedLogs)
-	return nil
+	printLogs(_categorizedLogs)
+	return _categorizedLogs, nil
 }
 
 // categorizeTransactionLogs categorizes transaction logs based on program IDs.
@@ -63,8 +64,8 @@ func fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetT
 
 	var tx *rpc.GetTransactionResult
 	var err error
-	maxRetries := 10         // 最大重试次数
-	baseDelay := time.Second // 初始延迟
+	maxRetries := 15             // 最大重试次数
+	baseDelay := time.Second * 2 // 初始延迟
 	maxDelay := 30 * time.Second
 
 	for i := 0; i < maxRetries; i++ {

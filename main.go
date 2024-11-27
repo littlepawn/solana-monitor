@@ -6,6 +6,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gorilla/websocket"
 	"log"
+	"meme/service"
 	"os"
 	"sync"
 	"time"
@@ -137,6 +138,11 @@ func handleMessages(wsConn *WSConnection, address string) {
 		if notification.Method == "logsNotification" {
 			signature := notification.Params.Result.Value.Signature
 			wsConn.logger.Printf("交易签名: %s", signature)
+			categorizedLogs, err := service.NewTransactionService().GetTransactionLogs(signature)
+			if err != nil {
+				wsConn.logger.Printf("获取交易日志失败: %v", err)
+			}
+			wsConn.logger.Printf("交易日志: %v", categorizedLogs)
 
 			if notification.Params.Result.Value.Err != nil {
 				wsConn.logger.Printf("交易失败: %v", notification.Params.Result.Value.Err)
