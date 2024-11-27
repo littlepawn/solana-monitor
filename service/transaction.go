@@ -43,28 +43,28 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 	if err != nil {
 		return transactionRep, err
 	}
-	for _, tokenBalance := range txDetails.Meta.PreTokenBalances {
-		if tokenBalance.Owner.String() == address && tokenBalance.ProgramId.String() == SPLTokenProgramID {
-			fmt.Printf("%s 买入数量: %s, mint: %s\n", address, tokenBalance.UiTokenAmount.UiAmountString, tokenBalance.Mint.String())
+	for _, preTokenBalance := range txDetails.Meta.PreTokenBalances {
+		if preTokenBalance.Owner.String() == address && preTokenBalance.ProgramId.String() == SPLTokenProgramID {
 			_preTransactionRep = TransactionRep{
 				Address: address,
-				Amount:  tokenBalance.UiTokenAmount.UiAmountString,
-				Mint:    tokenBalance.Mint.String(),
+				Amount:  preTokenBalance.UiTokenAmount.UiAmountString,
+				Mint:    preTokenBalance.Mint.String(),
 			}
 			break
 		}
 	}
 
-	for _, tokenBalance := range txDetails.Meta.PostTokenBalances {
-		if tokenBalance.Owner.String() == address && tokenBalance.ProgramId.String() == SPLTokenProgramID {
+	for _, postTokenBalance := range txDetails.Meta.PostTokenBalances {
+		if postTokenBalance.Owner.String() == address && postTokenBalance.ProgramId.String() == SPLTokenProgramID {
 			_postTransactionRep = TransactionRep{
 				Address: address,
-				Amount:  tokenBalance.UiTokenAmount.UiAmountString,
-				Mint:    tokenBalance.Mint.String(),
+				Amount:  postTokenBalance.UiTokenAmount.UiAmountString,
+				Mint:    postTokenBalance.Mint.String(),
 			}
 			break
 		}
 	}
+	fmt.Printf("pre: %v ========= post: %v\n", _postTransactionRep.Amount, _postTransactionRep.Amount)
 	if _preTransactionRep.Address == "" && _postTransactionRep.Address != "" {
 		transactionRep = _postTransactionRep
 		transactionRep.Type = "buy"
