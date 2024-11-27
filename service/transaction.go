@@ -16,10 +16,11 @@ const (
 	SystemProgramID   = "11111111111111111111111111111111"
 )
 
-type CategorizedLogs struct {
-	SPLTokenLogs []string `json:"spl_token_logs"`
-	SystemLogs   []string `json:"system_logs"`
-	OtherLogs    []string `json:"other_logs"`
+type TransactionRep struct {
+	Address string
+	Amount  string
+	Mint    string
+	Type    string
 }
 
 type TransactionService struct{}
@@ -28,33 +29,33 @@ func NewTransactionService() *TransactionService {
 	return &TransactionService{}
 }
 
-func (s *TransactionService) GetTransactionLogs(signatureStr string) (CategorizedLogs, error) {
+func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (TransactionRep, error) {
 	client := rpc.New(rpc.MainNetBeta_RPC)
-	var _categorizedLogs CategorizedLogs
+	var transactionRep TransactionRep
 	signature, err := solana.SignatureFromBase58(signatureStr)
 	if err != nil {
 		log.Fatalf("Failed to parse signature: %v", err)
-		return _categorizedLogs, err
+		return transactionRep, err
 	}
 
-	_categorizedLogs, err = categorizeTransactionLogs(client, signature)
+	txDetails, err := fetchTransaction(client, signature)
 	if err != nil {
-		log.Fatalf("Failed to categorize logs: %v", err)
-		return _categorizedLogs, err
+		return transactionRep, err
 	}
-
-	printLogs(_categorizedLogs)
-	return _categorizedLogs, nil
-}
-
-// categorizeTransactionLogs categorizes transaction logs based on program IDs.
-func categorizeTransactionLogs(client *rpc.Client, signature solana.Signature) (CategorizedLogs, error) {
-	tx, err := fetchTransaction(client, signature)
-	if err != nil {
-		return CategorizedLogs{}, err
+	for _, tokenBalance := range txDetails.Meta.PostTokenBalances {
+		if tokenBalance.Owner.String() == address && tokenBalance.ProgramId.String() == SPLTokenProgramID {
+			fmt.Printf("%s 买入数量: %s, mint: %s\n", address, tokenBalance.UiTokenAmount.UiAmountString, tokenBalance.Mint.String())
+			transactionRep = TransactionRep{
+				Address: address,
+				Amount:  tokenBalance.UiTokenAmount.UiAmountString,
+				Mint:    tokenBalance.Mint.String(),
+				Type:    "buy",
+			}
+			break
+		}
 	}
+	return transactionRep, nil
 
-	return categorizeLogs(tx.Meta.LogMessages), nil
 }
 
 // fetchTransaction fetches the transaction details from the Solana blockchain.
@@ -97,38 +98,4 @@ func fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetT
 	}
 
 	return tx, nil
-}
-
-// categorizeLogs categorizes logs based on predefined program IDs.
-func categorizeLogs(logMessages []string) CategorizedLogs {
-	categorizedLogs := CategorizedLogs{}
-	for _, logMsg := range logMessages {
-		switch {
-		case strings.Contains(logMsg, SPLTokenProgramID):
-			categorizedLogs.SPLTokenLogs = append(categorizedLogs.SPLTokenLogs, logMsg)
-		case strings.Contains(logMsg, SystemProgramID):
-			categorizedLogs.SystemLogs = append(categorizedLogs.SystemLogs, logMsg)
-		default:
-			categorizedLogs.OtherLogs = append(categorizedLogs.OtherLogs, logMsg)
-		}
-	}
-	return categorizedLogs
-}
-
-// printLogs prints the categorized logs to the console.
-func printLogs(categorizedLogs CategorizedLogs) {
-	fmt.Println("SPL Token Logs:")
-	for _, splTokenLog := range categorizedLogs.SPLTokenLogs {
-		fmt.Println(splTokenLog)
-	}
-
-	fmt.Println("\nSystem Logs:")
-	for _, systemLog := range categorizedLogs.SystemLogs {
-		fmt.Println(systemLog)
-	}
-
-	fmt.Println("\nOther Logs:")
-	for _, otherLog := range categorizedLogs.OtherLogs {
-		fmt.Println(otherLog)
-	}
 }
