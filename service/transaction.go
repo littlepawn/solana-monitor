@@ -64,7 +64,7 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 			break
 		}
 	}
-	fmt.Printf("pre: %v ========= post: %v\n", _postTransactionRep.Amount, _postTransactionRep.Amount)
+	fmt.Printf("pre: %v ========= post: %v\n", _preTransactionRep.Amount, _postTransactionRep.Amount)
 	if _preTransactionRep.Address == "" && _postTransactionRep.Address != "" {
 		transactionRep = _postTransactionRep
 		transactionRep.Type = "buy"
