@@ -14,7 +14,7 @@ import (
 
 const (
 	SolanaWebSocketURL = "wss://api.mainnet-beta.solana.com"
-	PingInterval       = 5 * time.Second // 每 15 秒发送一次 Ping
+	PingInterval       = 5 * time.Second // 每 5 秒发送一次 Ping
 	ReconnectInterval  = 5 * time.Second // 断开后 5 秒后重连
 )
 
@@ -139,16 +139,16 @@ func handleMessages(wsConn *WSConnection, address string) {
 			signature := notification.Params.Result.Value.Signature
 			wsConn.logger.Printf("交易签名: %s", signature)
 
-			transactionLogs, err := service.NewTransactionService().GetTransactionLogs(address, signature)
+			transactionLogs, err := service.NewTransactionService(wsConn.logger).GetTransactionLogs(address, signature)
 			if err != nil {
 				wsConn.logger.Printf("获取交易日志失败: %v", err)
 			}
 			transactionLogsJson, err := json.Marshal(transactionLogs)
 			if err != nil {
-				wsConn.logger.Printf("交易日志: %v", transactionLogs)
-				wsConn.logger.Printf("JSON 序列化失败: %v", err)
+				wsConn.logger.Printf("解析后交易原始日志: %v", transactionLogs)
+				wsConn.logger.Printf("解析后交易日志JSON序列化失败: %v", err)
 			} else {
-				wsConn.logger.Printf("交易日志: %s", transactionLogsJson)
+				wsConn.logger.Printf("解析后交易JSON日志: %s", transactionLogsJson)
 			}
 
 			if notification.Params.Result.Value.Err != nil {

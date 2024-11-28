@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gagliardetto/solana-go"
 	"log"
@@ -24,10 +25,16 @@ type TransactionRep struct {
 	Type    string
 }
 
-type TransactionService struct{}
+// TransactionService 表示交易服务
+type TransactionService struct {
+	logger *log.Logger
+}
 
-func NewTransactionService() *TransactionService {
-	return &TransactionService{}
+// NewTransactionService 创建一个新的交易服务实例
+func NewTransactionService(logger *log.Logger) *TransactionService {
+	return &TransactionService{
+		logger: logger,
+	}
 }
 
 func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (TransactionRep, error) {
@@ -35,11 +42,11 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 	var transactionRep, _preTransactionRep, _postTransactionRep TransactionRep
 	signature, err := solana.SignatureFromBase58(signatureStr)
 	if err != nil {
-		log.Fatalf("Failed to parse signature: %v", err)
+		s.logger.Printf("解析签名交易签名失败: %v", err)
 		return transactionRep, err
 	}
 
-	txDetails, err := fetchTransaction(client, signature)
+	txDetails, err := s.fetchTransaction(client, signature)
 	if err != nil {
 		return transactionRep, err
 	}
@@ -64,11 +71,11 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 			break
 		}
 	}
-	fmt.Printf("pre: %v ========= post: %v\n", _preTransactionRep.Amount, _postTransactionRep.Amount)
+	s.logger.Printf("交易前数量: %v ========= 交易后数量: %v\n", _preTransactionRep.Amount, _postTransactionRep.Amount)
 	if _preTransactionRep.Address == "" && _postTransactionRep.Address != "" {
 		transactionRep = _postTransactionRep
 		transactionRep.Type = "buy"
-		fmt.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
+		s.logger.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
 	}
 	if _preTransactionRep.Address != "" {
 		transactionRep = _preTransactionRep
@@ -76,31 +83,33 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 		if _postTransactionRep.Address != "" {
 			preAmount, err := strconv.ParseFloat(_preTransactionRep.Amount, 64)
 			if err != nil {
-				fmt.Printf("Failed to parse pre-transaction amount: %v", err)
+				s.logger.Printf("转化交易前数量失败 %v", err)
+				return transactionRep, nil
 			}
 			postAmount, err := strconv.ParseFloat(_postTransactionRep.Amount, 64)
 			if err != nil {
-				fmt.Printf("Failed to parse post-transaction amount: %v", err)
+				s.logger.Printf("转化交易后数量失败 %v", err)
+				return transactionRep, nil
 			}
 			if preAmount > postAmount {
 				transactionRep.Amount = fmt.Sprintf("%.2f", preAmount-postAmount)
 			} else {
 				transactionRep.Amount = fmt.Sprintf("%.2f", postAmount-preAmount)
 				transactionRep.Type = "buy"
-				fmt.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
+				s.logger.Printf("%s 买入数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
 				return transactionRep, nil
 			}
 		}
-		fmt.Printf("%s 卖出数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
+		s.logger.Printf("%s 卖出数量: %s, mint: %s\n", address, transactionRep.Amount, transactionRep.Mint)
 	}
 	return transactionRep, nil
 
 }
 
 // fetchTransaction fetches the transaction details from the Solana blockchain.
-func fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetTransactionResult, error) {
+func (s *TransactionService) fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetTransactionResult, error) {
 	ctx := context.Background()
-	fmt.Println("Fetching transaction details...")
+	s.logger.Printf("开始获取交易详情...")
 
 	var tx *rpc.GetTransactionResult
 	var err error
@@ -112,14 +121,22 @@ func fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetT
 		tx, err = client.GetTransaction(ctx, signature, nil)
 		if err == nil {
 			// 请求成功，退出循环
+			txLogsJson, err := json.Marshal(tx)
+			if err != nil {
+				s.logger.Printf("交易raw日志: %v", tx)
+				s.logger.Printf("交易日志JSON序列化失败: %v", err)
+			} else {
+				s.logger.Printf("交易JSON日志: %s", txLogsJson)
+			}
 			break
 		}
 
 		if strings.Contains(err.Error(), "not found") {
-			fmt.Println("Transaction not found, retrying...")
+			s.logger.Printf("交易未找到，重试中...")
 		} else if strings.Contains(err.Error(), "Too many requests") {
-			fmt.Printf("Rate limit hit. Retrying after %d seconds...\n", 1<<i) // 2^i 秒
+			s.logger.Printf("请求速率限制。%d 秒后重试...", 1<<i) // 2^i 秒
 		} else {
+			s.logger.Printf("获取交易详情时发生错误: %v", err)
 			return nil, fmt.Errorf("failed to fetch transaction: %w", err)
 		}
 
@@ -133,6 +150,7 @@ func fetchTransaction(client *rpc.Client, signature solana.Signature) (*rpc.GetT
 
 	// 检查最终结果是否有效
 	if tx == nil || tx.Meta == nil || tx.Meta.LogMessages == nil {
+		s.logger.Printf("重试后交易中未找到日志")
 		return nil, fmt.Errorf("no logs found in the transaction after retries")
 	}
 
