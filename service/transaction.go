@@ -121,8 +121,16 @@ func (s *TransactionService) fetchTransaction(client *rpc.Client, signature sola
 	baseDelay := time.Second * 2 // 初始延迟
 	maxDelay := 30 * time.Second
 
+	// 设置配置参数支持最大交易版本
+	params := map[string]interface{}{
+		"maxSupportedTransactionVersion": uint64(0),
+	}
+
 	for i := 0; i < maxRetries; i++ {
-		tx, err = client.GetTransaction(ctx, signature, nil)
+		tx, err = client.GetTransaction(ctx, signature, &rpc.GetTransactionOpts{
+			Commitment:                     "confirmed",
+			MaxSupportedTransactionVersion: params["maxSupportedTransactionVersion"].(*uint64),
+		})
 		if err == nil {
 			// 请求成功，退出循环
 			txLogsJson, err := json.Marshal(tx)
