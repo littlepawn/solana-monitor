@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gagliardetto/solana-go"
 	"log"
+	"meme/global"
 	"strconv"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func NewTransactionService(logger *log.Logger) *TransactionService {
 }
 
 func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (TransactionRep, error) {
-	client := rpc.New(rpc.MainNetBeta_RPC)
+	client := global.RpcClient
 	var transactionRep, _preTransactionRep, _postTransactionRep TransactionRep
 	signature, err := solana.SignatureFromBase58(signatureStr)
 	if err != nil {

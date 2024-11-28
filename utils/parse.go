@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
+	"meme/global"
 )
 
 func ParseTransactionLogs() {
 	// 初始化 RPC 客户端
-	client := rpc.New("https://api.mainnet-beta.solana.com")
+	client := global.RpcClient
 
 	// 替换为实际的交易签名
 	signatureStr := "5DcYSSqgrgivaWsWA4i3PNrNYkdFTnaU6EC2i3afiBun2kpNdFKSPKf14FWuhRSDCqiB7p9MeJQtf3oSqCK9LmFx"

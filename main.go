@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gorilla/websocket"
 	"log"
+	"meme/core"
+	"meme/global"
 	"meme/service"
 	"os"
 	"sync"
@@ -244,5 +247,9 @@ func subscribeToSolanaLogs() {
 }
 
 func main() {
+	global.Redis = core.InitRedis()
+	fmt.Printf("Redis 连接成功: %v\n", global.Redis)
+	global.RpcClient = rpc.New(rpc.MainNetBeta_RPC)
+	fmt.Printf("RPC 连接成功: %v\n", global.RpcClient)
 	subscribeToSolanaLogs()
 }
