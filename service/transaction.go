@@ -50,6 +50,10 @@ func (s *TransactionService) GetTransactionLogs(address, signatureStr string) (T
 	if err != nil {
 		return transactionRep, err
 	}
+	if len(txDetails.Meta.PreTokenBalances) == 0 || len(txDetails.Meta.PostTokenBalances) == 0 {
+		return transactionRep, fmt.Errorf("非交易记录过滤")
+	}
+
 	for _, preTokenBalance := range txDetails.Meta.PreTokenBalances {
 		if preTokenBalance.Owner.String() == address && preTokenBalance.ProgramId.String() == SPLTokenProgramID {
 			_preTransactionRep = TransactionRep{
