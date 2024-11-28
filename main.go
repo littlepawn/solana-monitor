@@ -142,6 +142,7 @@ func handleMessages(wsConn *WSConnection, address string) {
 			transactionLogs, err := service.NewTransactionService(wsConn.logger).GetTransactionLogs(address, signature)
 			if err != nil {
 				wsConn.logger.Printf("获取交易日志失败: %v", err)
+				continue
 			}
 			transactionLogsJson, err := json.Marshal(transactionLogs)
 			if err != nil {
