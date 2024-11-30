@@ -159,6 +159,8 @@ func handleMessages(ws *SafeWebSocket, address string) {
 		_, msg, err := ws.conn.ReadMessage()
 		if err != nil {
 			ws.logger.Printf("读取消息失败: %v", err)
+			ws.logger.Printf("尝试重连...")
+			reconnect(ws, address)
 			return
 		}
 
@@ -224,10 +226,48 @@ func subscribeToSolanaLogs() {
 				logger.Printf("WebSocket 连接成功")
 				ws := NewSafeWebSocket(conn, logger)
 				defer ws.Close()
-
+				go startPing(ws)
 				subscribeToLogs(ws, address)
 			}
 		}(address)
+	}
+}
+
+func startPing(ws *SafeWebSocket) {
+	ticker := time.NewTicker(PingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			ws.mu.Lock()
+			err := ws.conn.WriteMessage(websocket.PingMessage, nil)
+			ws.mu.Unlock()
+			if err != nil {
+				ws.logger.Printf("发送 Ping 消息失败: %v", err)
+				return
+			}
+		case <-ws.stopCh:
+			ws.logger.Println("心跳机制停止")
+			return
+		}
+	}
+}
+
+func reconnect(ws *SafeWebSocket, address string) {
+	for {
+		conn, err := connect()
+		if err != nil {
+			ws.logger.Printf("WebSocket 重新连接失败，重试中: %v", err)
+			time.Sleep(ReconnectInterval)
+			continue
+		}
+
+		ws.logger.Printf("WebSocket 重新连接成功")
+		ws.conn = conn
+		go startPing(ws)
+		subscribeToLogs(ws, address)
+		return
 	}
 }
 
