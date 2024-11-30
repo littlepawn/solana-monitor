@@ -9,6 +9,7 @@ import (
 	"log"
 	"meme/core"
 	"meme/global"
+	"meme/service"
 	"os"
 	"sync"
 	"time"
@@ -173,6 +174,19 @@ func handleMessages(ws *SafeWebSocket, address string) {
 		if notification.Method == "logsNotification" {
 			signature := notification.Params.Result.Value.Signature
 			ws.logger.Printf("交易签名: %s", signature)
+
+			transactionLogs, err := service.NewTransactionService(ws.logger).GetTransactionLogs(address, signature)
+			if err != nil {
+				ws.logger.Printf("获取交易日志失败: %v", err)
+				continue
+			}
+			transactionLogsJson, err := json.Marshal(transactionLogs)
+			if err != nil {
+				ws.logger.Printf("解析后交易原始日志: %v", transactionLogs)
+				ws.logger.Printf("解析后交易日志JSON序列化失败: %v", err)
+			} else {
+				ws.logger.Printf("解析后交易JSON日志: %s", transactionLogsJson)
+			}
 
 			if notification.Params.Result.Value.Err != nil {
 				ws.logger.Printf("交易失败: %v", notification.Params.Result.Value.Err)
