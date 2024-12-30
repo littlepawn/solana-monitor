@@ -84,8 +84,8 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
 		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		fmt.Printf("tokenAccount.Account.Data: %+v\n", tokenAccount.Account.Data)
-		var data []byte
-		if err := tokenAccount.Account.Data.UnmarshalJSON(data); err != nil {
+		data, err := tokenAccount.Account.Data.MarshalJSON()
+		if err != nil {
 			fmt.Println("解析代币账户数据失败:", err)
 			continue
 		}
