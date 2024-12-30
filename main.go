@@ -270,13 +270,23 @@ func reconnect(ws *SafeWebSocket, address string) {
 
 func main() {
 	global.SystemConfig = core.InitSystemConfig()
-	addresses := []string{
-		solana.MustPublicKeyFromBase58(global.SystemConfig.MonitorAddress).String(),
-		solana.MustPublicKeyFromBase58(global.SystemConfig.SelfAddress).String(),
+	var addresses []string
+	selfAddress := global.SystemConfig.SelfAddress
+	if selfAddress != "" {
+		addresses = append(addresses, solana.MustPublicKeyFromBase58(selfAddress).String())
 	}
+	monitorAddress := global.SystemConfig.MonitorAddress
+	if monitorAddress != "" {
+		addresses = append(addresses, solana.MustPublicKeyFromBase58(monitorAddress).String())
+	}
+
 	var rootCmd = &cobra.Command{
 		Use: "main",
 		Run: func(cmd *cobra.Command, args []string) {
+			if len(addresses) == 0 {
+				fmt.Println("请配置监控地址")
+				os.Exit(1)
+			}
 			// 初始化 Redis
 			global.Redis = core.InitRedis()
 			fmt.Printf("Redis 连接成功: %v\n", global.Redis)

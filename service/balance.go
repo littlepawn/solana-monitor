@@ -11,6 +11,20 @@ import (
 	"meme/global"
 )
 
+type TokenAmount struct {
+	Amount         string `json:"amount"`
+	Decimals       uint8  `json:"decimals"`
+	UiAmountString string `json:"uiAmountString"`
+}
+
+type TokenAccountData struct {
+	Parsed struct {
+		Info struct {
+			TokenAmount TokenAmount `json:"tokenAmount"`
+		} `json:"info"`
+	} `json:"parsed"`
+}
+
 var BalanceCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Get SOL and token balances",
@@ -70,7 +84,12 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
 		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		fmt.Printf("tokenAccount.Account.Data: %+v\n", tokenAccount.Account.Data)
-
+		var data []byte
+		if err := tokenAccount.Account.Data.UnmarshalJSON(data); err != nil {
+			fmt.Println("解析代币账户数据失败:", err)
+			continue
+		}
+		fmt.Printf("data: %+v\n", data)
 		fmt.Println("--------------------------------------")
 	}
 }
