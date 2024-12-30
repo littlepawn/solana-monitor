@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"math/big"
@@ -68,29 +67,42 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 
 	fmt.Printf("账户 %s 持有的 SPL 代币列表:\n", address.String())
 	for _, tokenAccount := range response.Value {
-		binary := tokenAccount.Account.Data.GetBinary()
-		fmt.Println("Data Content: ", binary)
-		accountData, err := base64.StdEncoding.DecodeString(string(binary))
-		if err != nil {
-			fmt.Printf("解析代币账户数据失败: %v\n", err)
-			continue
-		}
+		// 检查数据格式
+		//if tokenAccount.Account.Data.Encoding != "base64" {
+		//	fmt.Println("数据格式不是 Base64，直接解析为字节数组")
+		//	accountData := tokenAccount.Account.Data.GetBinary()
+		//	parseTokenAccountData(accountData)
+		//	continue
+		//}
+		//
+		//// Base64 数据解析
+		//accountData, err := base64.StdEncoding.DecodeString(tokenAccount.Account.Data.GetBinary())
+		//if err != nil {
+		//	fmt.Printf("解析代币账户数据失败: %v\n", err)
+		//	continue
+		//}
 
-		// 检查账户数据长度是否符合 SPL Token 数据结构
-		if len(accountData) < 165 {
-			fmt.Println("账户数据长度不正确，可能不是一个有效的 SPL 代币账户")
-			continue
-		}
-
-		// 提取余额数据
-		amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
-		amount := new(big.Int).SetBytes(amountBytes)
-
-		// 提取 Mint 地址（代币的唯一标识）
-		mint := solana.PublicKeyFromBytes(accountData[0:32])
-
-		fmt.Printf("代币地址 (Mint): %s\n", mint)
-		fmt.Printf("余额: %s\n", amount)
-		fmt.Println("--------------------------------------")
+		accountData := tokenAccount.Account.Data.GetBinary()
+		parseTokenAccountData(accountData)
 	}
+}
+
+// 解析代币账户数据
+func parseTokenAccountData(accountData []byte) {
+	// 检查账户数据长度是否符合 SPL Token 数据结构
+	if len(accountData) < 165 {
+		fmt.Println("账户数据长度不正确，可能不是一个有效的 SPL 代币账户")
+		return
+	}
+
+	// 提取余额数据
+	amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
+	amount := new(big.Int).SetBytes(amountBytes)
+
+	// 提取 Mint 地址（代币的唯一标识）
+	mint := solana.PublicKeyFromBytes(accountData[0:32])
+
+	fmt.Printf("代币地址 (Mint): %s\n", mint)
+	fmt.Printf("余额: %s\n", amount)
+	fmt.Println("--------------------------------------")
 }
