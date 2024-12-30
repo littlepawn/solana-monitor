@@ -7,6 +7,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
 	"log"
+	"meme/global"
 )
 
 var BalanceCmd = &cobra.Command{
@@ -14,7 +15,8 @@ var BalanceCmd = &cobra.Command{
 	Short: "Get SOL and token balances",
 	Run: func(cmd *cobra.Command, args []string) {
 		client := rpc.New(rpc.MainNetBeta_RPC)
-		address := solana.MustPublicKeyFromBase58("HXvUJoQuDvpZ4oNNFF5itafDfwMUCAFijLnjCwKVJ5rg")
+		selfAddress := global.SystemConfig.SelfAddress
+		address := solana.MustPublicKeyFromBase58(selfAddress)
 
 		getSolBalance(client, address)
 		getTokenBalances(client, address)
@@ -69,7 +71,9 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 		//
 		//fmt.Printf("代币账户: %s\n", accountPubkey)
 		//fmt.Printf("代币余额: %s %s\n", tokenAmount.Amount, tokenAmount.UiAmountString)
-		fmt.Println(tokenAccount)
+		fmt.Printf("tokenAccount: %+v\n", tokenAccount)
+		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
+		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		fmt.Println("--------------------------------------")
 	}
 }

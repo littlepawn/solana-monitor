@@ -274,6 +274,7 @@ func reconnect(ws *SafeWebSocket, address string) {
 }
 
 func main() {
+	global.SystemConfig = core.InitSystemConfig()
 	var rootCmd = &cobra.Command{
 		Use: "main",
 		Run: func(cmd *cobra.Command, args []string) {

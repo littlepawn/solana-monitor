@@ -7,10 +7,6 @@ import (
 	"os"
 )
 
-type Config struct {
-	Redis RedisConfig `yaml:"redis"`
-}
-
 type RedisConfig struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
@@ -19,7 +15,7 @@ type RedisConfig struct {
 }
 
 func InitRedis() *redis.Client {
-	cfg := readConfig()
+	cfg := readRedisConfig()
 	return redis.NewClient(&redis.Options{
 		Addr:     cfg.Host + ":" + cfg.Port,
 		Password: cfg.Password,
@@ -27,7 +23,7 @@ func InitRedis() *redis.Client {
 	})
 }
 
-func readConfig() RedisConfig {
+func readRedisConfig() RedisConfig {
 	data, err := os.ReadFile("config.yml")
 	if err != nil {
 		fmt.Printf("Failed to read config file: %v\n", err)
