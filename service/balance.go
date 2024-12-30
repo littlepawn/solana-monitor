@@ -97,10 +97,10 @@ func parseTokenAccountData(accountData []byte) {
 		return
 	}
 	fmt.Printf("accountData: %+v\n", accountData)
-	fmt.Printf("accountData2: %s\n", string(accountData))
 
 	// 提取余额数据
 	amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
+	reverseBytes(amountBytes)         // 转换为小端字节序
 	amount := new(big.Int).SetBytes(amountBytes)
 
 	// 提取 Mint 地址（代币的唯一标识）
@@ -110,3 +110,33 @@ func parseTokenAccountData(accountData []byte) {
 	fmt.Printf("余额: %s\n", amount)
 	fmt.Println("--------------------------------------")
 }
+
+func reverseBytes(b []byte) {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+}
+
+// 获取代币 Decimals
+/*func getTokenDecimals(client *rpc.Client, mint solana.PublicKey) int {
+	accountInfo, err := client.GetAccountInfo(context.TODO(), mint, &rpc.GetAccountInfoOpts{Encoding: rpc.EncodingBase64})
+	if err != nil {
+		fmt.Printf("获取 Mint 信息失败: %v\n", err)
+		return -1
+	}
+
+	data, err := accountInfo.Value.Data.GetBinary()
+	if err != nil {
+		fmt.Printf("解析 Mint 数据失败: %v\n", err)
+		return -1
+	}
+
+	// Mint 数据长度至少为 82 字节
+	if len(data) < 82 {
+		fmt.Println("Mint 数据长度不足，无法解析 Decimals")
+		return -1
+	}
+
+	// Decimals 位于第 44 字节
+	return int(data[44])
+}*/
