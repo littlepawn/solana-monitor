@@ -89,7 +89,8 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 			fmt.Println("解析代币账户数据失败:", err)
 			continue
 		}
-		fmt.Printf("data: %+v\n", data)
+		//fmt.Printf("data: %+v\n", data)
+		fmt.Println("data: ", string(data))
 		fmt.Println("--------------------------------------")
 	}
 }
