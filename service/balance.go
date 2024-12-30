@@ -2,13 +2,29 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
 	"log"
+
 	"meme/global"
 )
+
+type TokenAmount struct {
+	Amount         string `json:"amount"`
+	Decimals       uint8  `json:"decimals"`
+	UiAmountString string `json:"uiAmountString"`
+}
+
+type TokenAccountData struct {
+	Parsed struct {
+		Info struct {
+			TokenAmount TokenAmount `json:"tokenAmount"`
+		} `json:"info"`
+	} `json:"parsed"`
+}
 
 var BalanceCmd = &cobra.Command{
 	Use:   "balance",
@@ -71,9 +87,19 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 		//
 		//fmt.Printf("代币账户: %s\n", accountPubkey)
 		//fmt.Printf("代币余额: %s %s\n", tokenAmount.Amount, tokenAmount.UiAmountString)
-		fmt.Printf("tokenAccount: %+v\n", tokenAccount)
+
 		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
 		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
+		var tokenData TokenAccountData
+		err := json.Unmarshal(tokenAccount.Account.Data.GetRawJSON(), &tokenData)
+		if err != nil {
+			log.Fatalf("Failed to parse token account data: %v", err)
+		}
+
+		tokenAmount := tokenData.Parsed.Info.TokenAmount
+		fmt.Printf("Token account: %s\n", tokenAccount.Pubkey)
+		fmt.Printf("Token amount: %s %s\n", tokenAmount.Amount, tokenAmount.UiAmountString)
+
 		fmt.Println("--------------------------------------")
 	}
 }
