@@ -97,6 +97,7 @@ func parseTokenAccountData(accountData []byte) {
 		return
 	}
 	fmt.Printf("accountData: %+v\n", accountData)
+	fmt.Printf("accountData2: %s\n", string(accountData))
 
 	// 提取余额数据
 	amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
