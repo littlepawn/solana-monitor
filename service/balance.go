@@ -67,6 +67,8 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 
 	fmt.Printf("账户 %s 持有的 SPL 代币列表:\n", address.String())
 	for _, tokenAccount := range response.Value {
+		fmt.Printf("代币账户地址: %s\n", tokenAccount.Pubkey)
+		fmt.Printf("tokenAccount.Account.Data: %+v\n", tokenAccount.Account.Data)
 		// 检查数据格式
 		//if tokenAccount.Account.Data.Encoding != "base64" {
 		//	fmt.Println("数据格式不是 Base64，直接解析为字节数组")
@@ -94,6 +96,7 @@ func parseTokenAccountData(accountData []byte) {
 		fmt.Println("账户数据长度不正确，可能不是一个有效的 SPL 代币账户")
 		return
 	}
+	fmt.Printf("accountData: %+v\n", accountData)
 
 	// 提取余额数据
 	amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
