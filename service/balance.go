@@ -2,28 +2,16 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"log"
+	"math/big"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
-	"log"
-
 	"meme/global"
 )
-
-type TokenAmount struct {
-	Amount         string `json:"amount"`
-	Decimals       uint8  `json:"decimals"`
-	UiAmountString string `json:"uiAmountString"`
-}
-
-type TokenAccountData struct {
-	Parsed struct {
-		Info struct {
-			TokenAmount TokenAmount `json:"tokenAmount"`
-		} `json:"info"`
-	} `json:"parsed"`
-}
 
 var BalanceCmd = &cobra.Command{
 	Use:   "balance",
@@ -42,7 +30,7 @@ type BalanceService struct {
 	logger *log.Logger
 }
 
-// NewTransactionService 创建一个新的交易服务实例
+// NewBalanceService 创建一个新的余额服务实例
 func NewBalanceService(logger *log.Logger) *BalanceService {
 	return &BalanceService{
 		logger: logger,
@@ -80,17 +68,27 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 
 	fmt.Printf("账户 %s 持有的 SPL 代币列表:\n", address.String())
 	for _, tokenAccount := range response.Value {
-		// 获取代币账户地址和余额
-		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
-		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
-		fmt.Printf("tokenAccount.Account.Data: %+v\n", tokenAccount.Account.Data)
-		data, err := tokenAccount.Account.Data.MarshalJSON()
+		accountData, err := base64.StdEncoding.DecodeString(string(tokenAccount.Account.Data.GetBinary()))
 		if err != nil {
-			fmt.Println("解析代币账户数据失败:", err)
+			fmt.Printf("解析代币账户数据失败: %v\n", err)
 			continue
 		}
-		//fmt.Printf("data: %+v\n", data)
-		fmt.Println("data: ", string(data))
+
+		// 检查账户数据长度是否符合 SPL Token 数据结构
+		if len(accountData) < 165 {
+			fmt.Println("账户数据长度不正确，可能不是一个有效的 SPL 代币账户")
+			continue
+		}
+
+		// 提取余额数据
+		amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
+		amount := new(big.Int).SetBytes(amountBytes)
+
+		// 提取 Mint 地址（代币的唯一标识）
+		mint := solana.PublicKeyFromBytes(accountData[0:32])
+
+		fmt.Printf("代币地址 (Mint): %s\n", mint)
+		fmt.Printf("余额: %s\n", amount)
 		fmt.Println("--------------------------------------")
 	}
 }
