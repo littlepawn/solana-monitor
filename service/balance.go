@@ -82,24 +82,18 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 	fmt.Printf("账户 %s 持有的 SPL 代币列表:\n", address.String())
 	for _, tokenAccount := range response.Value {
 		// 获取代币账户地址和余额
-		//accountPubkey := tokenAccount.Pubkey
-		//tokenAmount := tokenAccount.Account.Data.Parsed.Info.TokenAmount
-		//
-		//fmt.Printf("代币账户: %s\n", accountPubkey)
-		//fmt.Printf("代币余额: %s %s\n", tokenAmount.Amount, tokenAmount.UiAmountString)
-
 		fmt.Printf("tokenAccount.Pubkey: %+v\n", tokenAccount.Pubkey)
 		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		var tokenData TokenAccountData
-		err := json.Unmarshal(tokenAccount.Account.Data.GetRawJSON(), &tokenData)
+		rawJson := tokenAccount.Account.Data.GetRawJSON()
+		fmt.Printf("rawJson: %+v\n", rawJson)
+		err := json.Unmarshal(rawJson, &tokenData)
 		if err != nil {
 			log.Fatalf("Failed to parse token account data: %v", err)
 		}
 
 		tokenAmount := tokenData.Parsed.Info.TokenAmount
-		fmt.Printf("Token account: %s\n", tokenAccount.Pubkey)
 		fmt.Printf("Token amount: %s %s\n", tokenAmount.Amount, tokenAmount.UiAmountString)
-
 		fmt.Println("--------------------------------------")
 	}
 }

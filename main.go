@@ -202,12 +202,7 @@ func handleMessages(ws *SafeWebSocket, address string) {
 }
 
 // subscribeToSolanaLogs 订阅多个地址
-func subscribeToSolanaLogs() {
-	addresses := []string{
-		solana.MustPublicKeyFromBase58("BkkrwtxMNkA66hfPbXcp1F3cxQihbG9ysYkHySsXhwyp").String(),
-		solana.MustPublicKeyFromBase58("HXvUJoQuDvpZ4oNNFF5itafDfwMUCAFijLnjCwKVJ5rg").String(),
-	}
-
+func subscribeToSolanaLogs(addresses []string) {
 	for _, address := range addresses {
 		go func(address string) {
 			logger, logFile, err := createLogger(address)
@@ -275,6 +270,10 @@ func reconnect(ws *SafeWebSocket, address string) {
 
 func main() {
 	global.SystemConfig = core.InitSystemConfig()
+	addresses := []string{
+		solana.MustPublicKeyFromBase58(global.SystemConfig.MonitorAddress).String(),
+		solana.MustPublicKeyFromBase58(global.SystemConfig.SelfAddress).String(),
+	}
 	var rootCmd = &cobra.Command{
 		Use: "main",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -288,7 +287,7 @@ func main() {
 
 			// 启动 Solana WebSocket 订阅
 			fmt.Println("启动 Solana WebSocket 订阅...")
-			subscribeToSolanaLogs()
+			subscribeToSolanaLogs(addresses)
 
 			// 阻塞主线程
 			select {}
