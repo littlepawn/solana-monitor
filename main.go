@@ -6,6 +6,8 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gorilla/websocket"
+	"github.com/spf13/cobra"
+
 	"log"
 	"meme/core"
 	"meme/global"
@@ -272,18 +274,28 @@ func reconnect(ws *SafeWebSocket, address string) {
 }
 
 func main() {
-	// 初始化 Redis
-	global.Redis = core.InitRedis()
-	fmt.Printf("Redis 连接成功: %v\n", global.Redis)
+	var rootCmd = &cobra.Command{
+		Use: "main",
+		Run: func(cmd *cobra.Command, args []string) {
+			// 初始化 Redis
+			global.Redis = core.InitRedis()
+			fmt.Printf("Redis 连接成功: %v\n", global.Redis)
 
-	// 初始化 Solana RPC 客户端
-	global.RpcClient = rpc.New(rpc.MainNetBeta_RPC)
-	fmt.Printf("RPC 客户端初始化成功: %v\n", global.RpcClient)
+			// 初始化 Solana RPC 客户端
+			global.RpcClient = rpc.New(rpc.MainNetBeta_RPC)
+			fmt.Printf("RPC 客户端初始化成功: %v\n", global.RpcClient)
 
-	// 启动 Solana WebSocket 订阅
-	fmt.Println("启动 Solana WebSocket 订阅...")
-	subscribeToSolanaLogs()
+			// 启动 Solana WebSocket 订阅
+			fmt.Println("启动 Solana WebSocket 订阅...")
+			subscribeToSolanaLogs()
 
-	// 阻塞主线程
-	select {}
+			// 阻塞主线程
+			select {}
+		},
+	}
+
+	rootCmd.AddCommand(service.BalanceCmd)
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }
