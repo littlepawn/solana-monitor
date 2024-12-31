@@ -106,10 +106,10 @@ func parseTokenMetadata(data []byte) TokenMetadata {
 	name := string(bytes.Trim(data[65:97], "\x00"))
 
 	// 提取符号 (97–128)
-	symbol := string(bytes.Trim(data[97:129], "\x00"))
+	symbol := string(bytes.Trim(data[97:119], "\x00"))
 
 	// 提取 URI (129–193)
-	uri := string(bytes.Trim(data[129:193], "\x00"))
+	uri := string(bytes.Trim(data[119:193], "\x00"))
 
 	return TokenMetadata{
 		Name:   name,
