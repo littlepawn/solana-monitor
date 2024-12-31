@@ -94,6 +94,10 @@ func GetTokenPrice(mint solana.PublicKey) (float64, error) {
 }
 
 func parseTokenMetadata(data []byte) TokenMetadata {
+	fmt.Printf("名称字节: %v\n", data[65:97])
+	fmt.Printf("符号字节: %v\n", data[97:129])
+	fmt.Printf("URI 字节: %v\n", data[129:193])
+
 	name := extractNullTerminatedString(data, 33)
 	symbol := extractNullTerminatedString(data, 97)
 	uri := extractNullTerminatedString(data, 129)
