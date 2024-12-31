@@ -67,8 +67,8 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 
 	fmt.Printf("账户 %s 持有的 SPL 代币列表:\n", address.String())
 	for _, tokenAccount := range response.Value {
-		fmt.Printf("代币账户地址: %s\n", tokenAccount.Pubkey)
-		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
+		//fmt.Printf("代币账户地址: %s\n", tokenAccount.Pubkey)
+		//fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		accountData := tokenAccount.Account.Data.GetBinary()
 		parseTokenAccountData(client, accountData)
 	}
