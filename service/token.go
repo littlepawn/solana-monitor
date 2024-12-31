@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -92,26 +93,27 @@ func GetTokenPrice(mint solana.PublicKey) (float64, error) {
 }
 
 func parseTokenMetadata(data []byte) TokenMetadata {
-	fmt.Printf("元数据字节: %v\n", data)
-	fmt.Println("元数据长度", len(data))
-	return TokenMetadata{}
-
-	//name := extractNullTerminatedString(data, 33)
-	//symbol := extractNullTerminatedString(data, 97)
-	//uri := extractNullTerminatedString(data, 129)
-
-	//return TokenMetadata{
-	//	Name:   name,
-	//	Symbol: symbol,
-	//	URI:    uri,
-	//}
-}
-
-// 提取 NULL 结尾的字符串
-func extractNullTerminatedString(data []byte, start int) string {
-	end := start
-	for end < len(data) && data[end] != 0 {
-		end++
+	// 检查数据长度是否符合最低要求
+	if len(data) < 193 {
+		return TokenMetadata{
+			Name:   "Invalid Metadata",
+			Symbol: "",
+			URI:    "",
+		}
 	}
-	return string(data[start:end])
+
+	// 提取名称 (65–96)
+	name := string(bytes.Trim(data[65:97], "\x00"))
+
+	// 提取符号 (97–128)
+	symbol := string(bytes.Trim(data[97:129], "\x00"))
+
+	// 提取 URI (129–193)
+	uri := string(bytes.Trim(data[129:193], "\x00"))
+
+	return TokenMetadata{
+		Name:   name,
+		Symbol: symbol,
+		URI:    uri,
+	}
 }
