@@ -67,6 +67,7 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) string {
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
 	decodedMetadata := parseTokenMetadata(data)
+	fmt.Printf("Token Metadata: %+v\n", decodedMetadata)
 	return decodedMetadata.Symbol
 }
 
