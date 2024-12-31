@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
+	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
 	"log"
@@ -64,6 +66,14 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) string {
 		return "Unknown"
 	}
 
+	var mint1 token.Mint
+	// Account{}.Data.GetBinary() returns the *decoded* binary data
+	// regardless the original encoding (it can handle them all).
+	err = bin.NewBinDecoder(accountInfo.GetBinary()).Decode(&mint1)
+	if err != nil {
+		panic(err)
+	}
+	spew.Dump(mint)
 	spew.Dump(accountInfo.Value.Data)
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
