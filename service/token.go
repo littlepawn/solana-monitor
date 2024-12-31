@@ -41,7 +41,7 @@ func NewTokenService(logger *log.Logger) *TokenService {
 	}
 }
 
-func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) TokenMetadata {
+func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) (TokenMetadata, token.Mint) {
 	// Metadata program ID
 	metadataProgramID := solana.MustPublicKeyFromBase58("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
 
@@ -56,31 +56,30 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) TokenMetadata {
 	)
 	if err != nil {
 		fmt.Printf("无法推导元数据地址: %v\n", err)
-		return TokenMetadata{}
+		return TokenMetadata{}, token.Mint{}
 	}
 
 	// Fetch account data
 	accountInfo, err := client.GetAccountInfo(context.TODO(), metadataAddress)
 	if err != nil || accountInfo == nil || accountInfo.Value == nil {
 		fmt.Printf("获取元数据失败: %v\n", err)
-		return TokenMetadata{}
+		return TokenMetadata{}, token.Mint{}
 	}
 
-	var mint1 token.Mint
+	var mintData token.Mint
 	// Account{}.Data.GetBinary() returns the *decoded* binary data
 	// regardless the original encoding (it can handle them all).
-	err = bin.NewBinDecoder(accountInfo.GetBinary()).Decode(&mint1)
+	err = bin.NewBinDecoder(accountInfo.GetBinary()).Decode(&mintData)
 	if err != nil {
-		panic(err)
+		fmt.Printf("解码元数据失败: %v\n", err)
 	}
-	//spew.Dump(mint1)
-	//spew.Dump(accountInfo)
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
 	spew.Dump(data)
+	fmt.Printf("Token Metadata: %+v\n", data)
 	decodedMetadata := parseTokenMetadata(data)
 	//fmt.Printf("Token Metadata: %+v\n", decodedMetadata)
-	return decodedMetadata
+	return decodedMetadata, mintData
 }
 
 func GetTokenPrice(mint solana.PublicKey) (float64, error) {
