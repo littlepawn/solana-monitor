@@ -94,7 +94,7 @@ func parseTokenAccountData(client *rpc.Client, accountData []byte) {
 	// 提取 Mint 地址（代币的唯一标识）
 	mint := solana.PublicKeyFromBytes(accountData[0:32])
 
-	metadata, mintData := GetTokenMetadata(client, mint)
+	metadata, _ := GetTokenMetadata(client, mint)
 
 	// 根据精度计算余额
 	decimals := getTokenDecimals(client, solana.PublicKeyFromBytes(accountData[0:32]))
