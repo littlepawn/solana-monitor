@@ -8,7 +8,6 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
 	"log"
-	"meme/global"
 	"net/http"
 )
 
@@ -17,9 +16,8 @@ var TokenCmd = &cobra.Command{
 	Short: "Get token metadata",
 	Run: func(cmd *cobra.Command, args []string) {
 		client := rpc.New(rpc.MainNetBeta_RPC)
-		selfAddress := global.SystemConfig.SelfAddress
-		address := solana.MustPublicKeyFromBase58(selfAddress)
-		GetTokenMetadata(client, address)
+		mint := solana.MustPublicKeyFromBase58(args[0])
+		GetTokenMetadata(client, mint)
 	},
 }
 
@@ -94,19 +92,19 @@ func GetTokenPrice(mint solana.PublicKey) (float64, error) {
 }
 
 func parseTokenMetadata(data []byte) TokenMetadata {
-	fmt.Printf("名称字节: %v\n", string(data[65:97]))
-	fmt.Printf("符号字节: %v\n", string(data[97:129]))
-	fmt.Printf("URI 字节: %v\n", string(data[129:193]))
+	fmt.Printf("元数据字节: %v\n", data)
+	fmt.Println("元数据长度", len(data))
+	return TokenMetadata{}
 
-	name := extractNullTerminatedString(data, 33)
-	symbol := extractNullTerminatedString(data, 97)
-	uri := extractNullTerminatedString(data, 129)
+	//name := extractNullTerminatedString(data, 33)
+	//symbol := extractNullTerminatedString(data, 97)
+	//uri := extractNullTerminatedString(data, 129)
 
-	return TokenMetadata{
-		Name:   name,
-		Symbol: symbol,
-		URI:    uri,
-	}
+	//return TokenMetadata{
+	//	Name:   name,
+	//	Symbol: symbol,
+	//	URI:    uri,
+	//}
 }
 
 // 提取 NULL 结尾的字符串
