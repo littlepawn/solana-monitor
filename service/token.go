@@ -73,12 +73,18 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) string {
 	if err != nil {
 		panic(err)
 	}
-	spew.Dump(mint1)
-	spew.Dump(accountInfo)
+	//spew.Dump(mint1)
+	//spew.Dump(accountInfo)
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
+	var none interface{}
+	err = bin.NewBinDecoder(data).Decode(&none)
+	if err != nil {
+		panic(err)
+	}
+	spew.Dump(none)
 	decodedMetadata := parseTokenMetadata(data)
-	fmt.Printf("Token Metadata: %+v\n", decodedMetadata)
+	//fmt.Printf("Token Metadata: %+v\n", decodedMetadata)
 	return decodedMetadata.Symbol
 }
 
