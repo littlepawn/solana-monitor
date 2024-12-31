@@ -70,12 +70,12 @@ func getTokenBalances(client *rpc.Client, address solana.PublicKey) {
 		fmt.Printf("代币账户地址: %s\n", tokenAccount.Pubkey)
 		fmt.Printf("tokenAccount.Account: %+v\n", tokenAccount.Account)
 		accountData := tokenAccount.Account.Data.GetBinary()
-		parseTokenAccountData(accountData)
+		parseTokenAccountData(client, accountData)
 	}
 }
 
 // 解析代币账户数据
-func parseTokenAccountData(accountData []byte) {
+func parseTokenAccountData(client *rpc.Client, accountData []byte) {
 	// 检查账户数据长度是否符合 SPL Token 数据结构
 	if len(accountData) < 165 {
 		fmt.Println("账户数据长度不正确，可能不是一个有效的 SPL 代币账户")
@@ -87,6 +87,15 @@ func parseTokenAccountData(accountData []byte) {
 	amountBytes := accountData[64:72] // SPL Token 余额存储在字节 [64:72]
 	reverseBytes(amountBytes)         // 转换为小端字节序
 	amount := new(big.Int).SetBytes(amountBytes)
+	if amount.Cmp(big.NewInt(1e6)) < 0 {
+		return
+	}
+
+	// 根据精度计算余额
+	decimals := getTokenDecimals(client, solana.PublicKeyFromBytes(accountData[0:32]))
+	if decimals > 0 {
+		amount = amount.Div(amount, big.NewInt(10).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil))
+	}
 
 	// 提取 Mint 地址（代币的唯一标识）
 	mint := solana.PublicKeyFromBytes(accountData[0:32])
@@ -103,19 +112,14 @@ func reverseBytes(b []byte) {
 }
 
 // 获取代币 Decimals
-/*func getTokenDecimals(client *rpc.Client, mint solana.PublicKey) int {
-	accountInfo, err := client.GetAccountInfo(context.TODO(), mint, &rpc.GetAccountInfoOpts{Encoding: rpc.EncodingBase64})
+func getTokenDecimals(client *rpc.Client, mint solana.PublicKey) int {
+	accountInfo, err := client.GetAccountInfo(context.TODO(), mint)
 	if err != nil {
 		fmt.Printf("获取 Mint 信息失败: %v\n", err)
 		return -1
 	}
 
-	data, err := accountInfo.Value.Data.GetBinary()
-	if err != nil {
-		fmt.Printf("解析 Mint 数据失败: %v\n", err)
-		return -1
-	}
-
+	data := accountInfo.Value.Data.GetBinary()
 	// Mint 数据长度至少为 82 字节
 	if len(data) < 82 {
 		fmt.Println("Mint 数据长度不足，无法解析 Decimals")
@@ -124,4 +128,4 @@ func reverseBytes(b []byte) {
 
 	// Decimals 位于第 44 字节
 	return int(data[44])
-}*/
+}
