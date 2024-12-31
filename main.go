@@ -305,6 +305,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(service.BalanceCmd)
+	rootCmd.AddCommand(service.TokenCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

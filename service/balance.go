@@ -109,6 +109,8 @@ func parseTokenAccountData(client *rpc.Client, accountData []byte) {
 	}
 
 	fmt.Printf("代币地址 (Mint): %s\n", mint)
+	TokenName := GetTokenMetadata(client, mint)
+	fmt.Printf("代币名称: %s\n", TokenName)
 	fmt.Println("--------------------------------------")
 }
 
