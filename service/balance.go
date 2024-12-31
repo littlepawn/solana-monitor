@@ -110,8 +110,7 @@ func parseTokenAccountData(client *rpc.Client, accountData []byte) {
 
 		fmt.Printf("余额(未处理精度): %s\n", amount)
 	}
-	spew.Dump(mintData)
-	fmt.Printf("代币精度: %d\n", decimals)
+	//fmt.Printf("代币精度: %d\n", decimals)
 	fmt.Printf("代币地址 (Mint): %s\n", mint)
 	fmt.Printf("代币符号: %s\n", metadata.Symbol)
 	fmt.Println("--------------------------------------")
@@ -131,5 +130,6 @@ func getTokenDecimals(client *rpc.Client, mint solana.PublicKey) int {
 		fmt.Printf("获取精度时出错: %v\n", err)
 		return 0
 	}
+	spew.Dump(response)
 	return int(response.Value.Decimals)
 }
