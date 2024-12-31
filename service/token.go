@@ -24,8 +24,9 @@ var TokenCmd = &cobra.Command{
 }
 
 type TokenMetadata struct {
-	Name string
-	// 可扩展为包含更多元数据字段，如符号、URI 等
+	Name   string
+	Symbol string
+	URI    string
 }
 
 type TokenService struct {
@@ -66,7 +67,7 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) string {
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
 	decodedMetadata := parseTokenMetadata(data)
-	return decodedMetadata.Name
+	return decodedMetadata.Symbol
 }
 
 func GetTokenPrice(mint solana.PublicKey) (float64, error) {
@@ -92,10 +93,22 @@ func GetTokenPrice(mint solana.PublicKey) (float64, error) {
 }
 
 func parseTokenMetadata(data []byte) TokenMetadata {
-	// 解析 token metadata 字节，根据 SPL Token Metadata Program 的规范
-	fmt.Printf("元数据字节: %v\n", data)
-	fmt.Println("元数据:", string(data))
-	// 假设名字字段在固定位置并以 NULL 结尾
-	name := string(data[33:65]) // 字节 33 到 65 是名称字段（根据 Token Metadata Program 的规范）
-	return TokenMetadata{Name: name}
+	name := extractNullTerminatedString(data, 33)
+	symbol := extractNullTerminatedString(data, 97)
+	uri := extractNullTerminatedString(data, 129)
+
+	return TokenMetadata{
+		Name:   name,
+		Symbol: symbol,
+		URI:    uri,
+	}
+}
+
+// 提取 NULL 结尾的字符串
+func extractNullTerminatedString(data []byte, start int) string {
+	end := start
+	for end < len(data) && data[end] != 0 {
+		end++
+	}
+	return string(data[start:end])
 }
