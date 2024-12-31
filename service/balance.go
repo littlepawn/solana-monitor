@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"log"
 	"math/big"
 
@@ -130,6 +129,6 @@ func getTokenDecimals(client *rpc.Client, mint solana.PublicKey) int {
 		fmt.Printf("获取精度时出错: %v\n", err)
 		return 0
 	}
-	spew.Dump(response)
+	//spew.Dump(response)
 	return int(response.Value.Decimals)
 }
