@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/spf13/cobra"
@@ -63,6 +64,9 @@ func GetTokenMetadata(client *rpc.Client, mint solana.PublicKey) string {
 		return "Unknown"
 	}
 
+	spew.Dump(accountInfo)
+	spew.Dump(accountInfo.Value)
+	spew.Dump(accountInfo.Value.Data)
 	// Decode metadata (depends on token metadata structure)
 	data := accountInfo.Value.Data.GetBinary()
 	fmt.Printf("Token Metadata1: %+v\n", accountInfo.Value.Data)
